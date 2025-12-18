@@ -138,6 +138,9 @@ def auto(
     sparse_subdir: str = typer.Option(
         "", help="[COLMAP] Sparse reconstruction subdirectory (e.g., '0' for sparse/0/)"
     ),
+    images_subdir: str = typer.Option(
+        "", help="[COLMAP] Images subdirectory (e.g., 'rgb' for images/rgb/)"
+    ),
     align_to_input_ext_scale: bool = typer.Option(
         True, help="[COLMAP] Align prediction to input extrinsics scale"
     ),
@@ -161,6 +164,10 @@ def auto(
     ),
     # Feat_vis export options
     feat_vis_fps: int = typer.Option(15, help="[FEAT_VIS] Frame rate for output video"),
+    # 3DGS options
+    infer_gs: bool = typer.Option(
+        False, help="[3DGS] Enable Gaussian Splatting branch (requires da3-giant or da3nested-giant-large model)"
+    ),
 ):
     """
     Automatically detect input type and run appropriate processing.
@@ -220,6 +227,7 @@ def auto(
             num_max_points=num_max_points,
             show_cameras=show_cameras,
             feat_vis_fps=feat_vis_fps,
+            infer_gs=infer_gs,
         )
 
     elif input_type == "images":
@@ -247,6 +255,7 @@ def auto(
             num_max_points=num_max_points,
             show_cameras=show_cameras,
             feat_vis_fps=feat_vis_fps,
+            infer_gs=infer_gs,
         )
 
     elif input_type == "video":
@@ -274,14 +283,15 @@ def auto(
             num_max_points=num_max_points,
             show_cameras=show_cameras,
             feat_vis_fps=feat_vis_fps,
+            infer_gs=infer_gs,
         )
 
     elif input_type == "colmap":
         typer.echo(
-            f"Processing COLMAP directory (sparse subdirectory: '{sparse_subdir or 'default'}')..."
+            f"Processing COLMAP directory (sparse subdirectory: '{sparse_subdir or 'default'}', images subdirectory: '{images_subdir or 'default'}')..."
         )
         # Process input
-        image_files, extrinsics, intrinsics = ColmapHandler.process(input_path, sparse_subdir)
+        image_files, extrinsics, intrinsics = ColmapHandler.process(input_path, sparse_subdir, images_subdir)
 
         # Handle export directory
         export_dir = InputHandler.handle_export_dir(export_dir, auto_cleanup)
@@ -306,6 +316,7 @@ def auto(
             num_max_points=num_max_points,
             show_cameras=show_cameras,
             feat_vis_fps=feat_vis_fps,
+            infer_gs=infer_gs,
         )
 
     typer.echo()
@@ -354,6 +365,10 @@ def image(
     ),
     # Feat_vis export options
     feat_vis_fps: int = typer.Option(15, help="[FEAT_VIS] Frame rate for output video"),
+    # 3DGS options
+    infer_gs: bool = typer.Option(
+        False, help="[3DGS] Enable Gaussian Splatting branch (requires da3-giant or da3nested-giant-large model)"
+    ),
 ):
     """Run camera pose and depth estimation on a single image."""
     # Process input
@@ -380,11 +395,12 @@ def image(
         process_res_method=process_res_method,
         export_feat_layers=export_feat_layers,
         use_ray_pose=use_ray_pose,
-        reference_view_strategy=reference_view_strategy,
+        ref_view_strategy=ref_view_strategy,
         conf_thresh_percentile=conf_thresh_percentile,
         num_max_points=num_max_points,
         show_cameras=show_cameras,
         feat_vis_fps=feat_vis_fps,
+        infer_gs=infer_gs,
     )
 
 
@@ -433,6 +449,10 @@ def images(
     ),
     # Feat_vis export options
     feat_vis_fps: int = typer.Option(15, help="[FEAT_VIS] Frame rate for output video"),
+    # 3DGS options
+    infer_gs: bool = typer.Option(
+        False, help="[3DGS] Enable Gaussian Splatting branch (requires da3-giant or da3nested-giant-large model)"
+    ),
 ):
     """Run camera pose and depth estimation on a directory of images."""
     # Process input
@@ -459,11 +479,12 @@ def images(
         process_res_method=process_res_method,
         export_feat_layers=export_feat_layers,
         use_ray_pose=use_ray_pose,
-        reference_view_strategy=reference_view_strategy,
+        ref_view_strategy=ref_view_strategy,
         conf_thresh_percentile=conf_thresh_percentile,
         num_max_points=num_max_points,
         show_cameras=show_cameras,
         feat_vis_fps=feat_vis_fps,
+        infer_gs=infer_gs,
     )
 
 
@@ -474,6 +495,9 @@ def colmap(
     ),
     sparse_subdir: str = typer.Option(
         "", help="Sparse reconstruction subdirectory (e.g., '0' for sparse/0/, empty for sparse/)"
+    ),
+    images_subdir: str = typer.Option(
+        "", help="Images subdirectory (e.g., 'rgb' for images/rgb/, empty for images/)"
     ),
     align_to_input_ext_scale: bool = typer.Option(
         True, help="Align prediction to input extrinsics scale"
@@ -517,10 +541,14 @@ def colmap(
     ),
     # Feat_vis export options
     feat_vis_fps: int = typer.Option(15, help="[FEAT_VIS] Frame rate for output video"),
+    # 3DGS options
+    infer_gs: bool = typer.Option(
+        False, help="[3DGS] Enable Gaussian Splatting branch (requires da3-giant or da3nested-giant-large model)"
+    ),
 ):
     """Run pose conditioned depth estimation on COLMAP data."""
     # Process input
-    image_files, extrinsics, intrinsics = ColmapHandler.process(colmap_dir, sparse_subdir)
+    image_files, extrinsics, intrinsics = ColmapHandler.process(colmap_dir, sparse_subdir, images_subdir)
 
     # Handle export directory
     export_dir = InputHandler.handle_export_dir(export_dir, auto_cleanup)
@@ -546,11 +574,12 @@ def colmap(
         intrinsics=intrinsics,
         align_to_input_ext_scale=align_to_input_ext_scale,
         use_ray_pose=use_ray_pose,
-        reference_view_strategy=reference_view_strategy,
+        ref_view_strategy=ref_view_strategy,
         conf_thresh_percentile=conf_thresh_percentile,
         num_max_points=num_max_points,
         show_cameras=show_cameras,
         feat_vis_fps=feat_vis_fps,
+        infer_gs=infer_gs,
     )
 
 
@@ -597,6 +626,10 @@ def video(
     ),
     # Feat_vis export options
     feat_vis_fps: int = typer.Option(15, help="[FEAT_VIS] Frame rate for output video"),
+    # 3DGS options
+    infer_gs: bool = typer.Option(
+        False, help="[3DGS] Enable Gaussian Splatting branch (requires da3-giant or da3nested-giant-large model)"
+    ),
 ):
     """Run depth estimation on video by extracting frames and processing them."""
     # Handle export directory
@@ -623,11 +656,12 @@ def video(
         process_res_method=process_res_method,
         export_feat_layers=export_feat_layers,
         use_ray_pose=use_ray_pose,
-        reference_view_strategy=reference_view_strategy,
+        ref_view_strategy=ref_view_strategy,
         conf_thresh_percentile=conf_thresh_percentile,
         num_max_points=num_max_points,
         show_cameras=show_cameras,
         feat_vis_fps=feat_vis_fps,
+        infer_gs=infer_gs,
     )
 
 

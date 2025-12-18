@@ -108,13 +108,16 @@ class ColmapHandler(InputHandler):
 
     @staticmethod
     def process(
-        colmap_dir: str, sparse_subdir: str = ""
+        colmap_dir: str, sparse_subdir: str = "", images_subdir: str = ""
     ) -> Tuple[List[str], np.ndarray, np.ndarray]:
         """Process COLMAP data"""
         InputHandler.validate_path(colmap_dir, "COLMAP directory")
 
         # Build paths
-        images_dir = os.path.join(colmap_dir, "images")
+        if images_subdir:
+            images_dir = os.path.join(colmap_dir, "images", images_subdir)
+        else:
+            images_dir = os.path.join(colmap_dir, "images")
         if sparse_subdir:
             sparse_dir = os.path.join(colmap_dir, "sparse", sparse_subdir)
         else:
